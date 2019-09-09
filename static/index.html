@@ -5,9 +5,15 @@
     <body>
         <!-- TODO: Text Box with Submit Button -->
         <h1>This will remind you</h1>
+        <div id='addevent'>
+            <form  action='http://127.0.0.1:5000/event' method='POST'>
+                <input type="text" name="name" placeholder="NAME">
+                <input name='date' type="text" placeholder="YYYY-MM-DD or MM-DD">
+                <input type="submit" value="submit">
+            </form>
+        </div><br/>
         <div id='events'>
-                <input id='input' type="text" placeholder="MM/DD/YYYY">
-                <button id='btn'>Submit</button>
+                
         </div>
     </body>
 
@@ -32,23 +38,14 @@
 }
 
         // document.getElementById('btn').addEventListener('click', () => {
-        //     let data = document.getElementById('input').value;
+        //     let data = document.getElementById('name').value;
         //     console.log(data);
         // });
 
         document.addEventListener('DOMContentLoaded', () => {
         reqJSON('GET', '/events')
         .then(({status, data}) => {
-        // Use the *data* argument to change what we see on the page.
-        // It will look something like this:
-        // {
-        // "events": [
-        // {"name": "Grandma's Birthday", "date": "08-05"},
-        // {"name": "Independence Day", "date": "07-04"}
-        // ]
-        // }
         console.log(data);
-        // There are better ways, but this is illustrative of the concept:
         let html = '';
         for (let event of data.events) {
         html += `${event.name}: ${event.date}<br>`;
@@ -56,7 +53,6 @@
         document.getElementById('events').innerHTML = html;
         })
         .catch(({status, data}) => {
-        // Display an error.
         document.getElementById('events').innerHTML = 'ERROR: ' +
         JSON.stringify(data);
         });
