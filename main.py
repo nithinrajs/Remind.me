@@ -1,4 +1,4 @@
-from flask import Flask, send_from_directory, jsonify, request, redirect
+from flask import Flask, send_from_directory, jsonify, request, redirect, url_for
 
 app = Flask(__name__, static_url_path='/static')
 
@@ -30,7 +30,7 @@ def AddEvent():
         "name": name
     }
     e['events'].append(d)
-    return 'Done'
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(debug=True)

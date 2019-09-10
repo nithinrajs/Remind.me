@@ -14,48 +14,83 @@
         </div><br/>
         <div id='events'>
                 
-        </div>
+        </div><br />
+        <div id='timer'></div>
     </body>
 
 <script>
     function reqJSON(method, url, data) {
         return new Promise((resolve, reject) => {
-        let xhr = new XMLHttpRequest();
-        xhr.open(method, url);
-        xhr.responseType = 'json';
-        xhr.onload = () => {
-            if (xhr.status >= 200 && xhr.status < 300) {
-                resolve({status: xhr.status, data: xhr.response});
-            } else {
+            let xhr = new XMLHttpRequest();
+            xhr.open(method, url);
+            xhr.responseType = 'json';
+            xhr.onload = () => {
+                if (xhr.status >= 200 && xhr.status < 300) { resolve({status: xhr.status, data: xhr.response}); } else {
+                reject({status: xhr.status, data: xhr.response}); } }; xhr.onerror=()=> {
                 reject({status: xhr.status, data: xhr.response});
+            };
+            xhr.send(data);
+        });
+    }
+    
+    function formatDate(datestr) {
+        const [y,m,d] = datestr.split('-');
+        return new Date(Number.parseInt(y), Number.parseInt(m)-1, Number.parseInt(d));
+    }
+
+    function countDown(events){
+        var tim = '';
+        for (let event of events)
+        {
+            let reminder = formatDate(event.date);
+            let now = new Date()
+            let timeLeft = reminder - now
+
+            if(timeLeft > 0)
+            {
+                var days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+                var hours = Math.floor((timeLeft%(1000 * 60 * 60 * 24))/(1000 * 60 * 60));
+                var minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                var seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+                //console.log(days +':'+hours + ':'+minutes+ ':'+seconds);
+            
+                tim += `${days + "d " + hours + "h " + minutes + "m " + seconds + "s "}<br />`
+                document.getElementById('timer').innerHTML = tim;
+                //document.getElementById("timer").innerHTML = days + "d " + hours + "h " + minutes + "m " + seconds + "s ";
             }
-        };
-    xhr.onerror = () => {
-      reject({status: xhr.status, data: xhr.response});
-    };
-    xhr.send(data);
-  });
-}
+        }
+    }
 
-        // document.getElementById('btn').addEventListener('click', () => {
-        //     let data = document.getElementById('name').value;
-        //     console.log(data);
-        // });
+    function timer(events)
+    {
+        console.log(events);
+        let html = '';
+        var t = setInterval( function() { countDown(events); },1000);
+         for (let event of events) 
+         {
+              
+              html += `${event.name}: ${event.date}<br>`;
+         }
+         document.getElementById('events').innerHTML = html;
+    }
 
-        document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', () => {
         reqJSON('GET', '/events')
         .then(({status, data}) => {
-        console.log(data);
-        let html = '';
-        for (let event of data.events) {
-        html += `${event.name}: ${event.date}<br>`;
-        }
-        document.getElementById('events').innerHTML = html;
+            timer(data.events);
+            // let html = '';
+            // for (let event of data.events) 
+            // {
+            //     countDown(event.date);   
+            //     html += `${event.name}: ${event.date}<br>`;
+            // }
+            // document.getElementById('events').innerHTML = html;
+            
         })
         .catch(({status, data}) => {
-        document.getElementById('events').innerHTML = 'ERROR: ' +
-        JSON.stringify(data);
+            document.getElementById('events').innerHTML = 'ERROR: ' +
+            JSON.stringify(data);
         });
-        });
+    });
 </script>
 </html>
