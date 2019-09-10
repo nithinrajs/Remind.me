@@ -12,10 +12,14 @@
                 <input type="submit" value="submit">
             </form>
         </div><br/>
+        <!-- <div id='events'>
+        </div><br /> -->
+    <div>
+        <h2>EVENTS</h2>
         <div id='events'>
-                
-        </div><br />
-        <div id='timer'></div>
+            
+        </div>
+    </div>    
     </body>
 
 <script>
@@ -39,13 +43,12 @@
     }
 
     function countDown(events){
-        var tim = '';
+        var html = '';
         for (let event of events)
         {
             let reminder = formatDate(event.date);
-            let now = new Date()
-            let timeLeft = reminder - now
-
+            let now = new Date();
+            let timeLeft = reminder - now;
             if(timeLeft > 0)
             {
                 var days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
@@ -54,38 +57,40 @@
                 var seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
                 //console.log(days +':'+hours + ':'+minutes+ ':'+seconds);
             
-                tim += `${days + "d " + hours + "h " + minutes + "m " + seconds + "s "}<br />`
-                document.getElementById('timer').innerHTML = tim;
-                //document.getElementById("timer").innerHTML = days + "d " + hours + "h " + minutes + "m " + seconds + "s ";
+                html += `${event.name}: ${event.date}: ${days + "d " + hours + "h " + minutes + "m " + seconds + "s "}<br />`
+                document.getElementById('events').innerHTML = html;
+            } else {
+                html += `${event.name}: ${event.date}: ${"Expired"}<br>`
+                document.getElementById('events').innerHTML = html;
             }
         }
     }
-
-    function timer(events)
-    {
-        console.log(events);
-        let html = '';
-        var t = setInterval( function() { countDown(events); },1000);
-         for (let event of events) 
-         {
-              
-              html += `${event.name}: ${event.date}<br>`;
-         }
-         document.getElementById('events').innerHTML = html;
-    }
+    
+    // function timer(events)
+    // {
+    //     console.log(events);
+    //     let html = '';
+    //     var t = setInterval( function() { countDown(events); },1000);
+    //      for (let event of events) 
+    //      {
+    //           html += `${event.name}: ${event.date}<br>`;
+    //      }
+    //      document.getElementById('events').innerHTML = html;
+    // }
 
     document.addEventListener('DOMContentLoaded', () => {
         reqJSON('GET', '/events')
         .then(({status, data}) => {
-            timer(data.events);
-            // let html = '';
+            //timer(data.events);
+            console.log(data.events);
+            let html = '';
+            var t = setInterval( function() { countDown(data.events); },1000);
             // for (let event of data.events) 
             // {
-            //     countDown(event.date);   
-            //     html += `${event.name}: ${event.date}<br>`;
-            // }
+            //   html += `${event.name}: ${event.date}<br>`;
+            // }    
             // document.getElementById('events').innerHTML = html;
-            
+
         })
         .catch(({status, data}) => {
             document.getElementById('events').innerHTML = 'ERROR: ' +

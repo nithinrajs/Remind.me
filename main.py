@@ -5,10 +5,10 @@ app = Flask(__name__, static_url_path='/static')
 e = {
     "events": [{
         "date": "2018-02-23",
-        "name": "test1"
+        "name": "CIP Exam"
     }, {
         "date": "2019-01-20",
-        "name": "Test2"
+        "name": "Course Add/Drop"
     }]
 }
 
