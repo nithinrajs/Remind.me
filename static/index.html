@@ -1,24 +1,40 @@
 <html>
     <head>
         <title>REMIND ME!</title>
+        <style>
+
+        table, th, td {
+            border-bottom: 1px solid #ddd;
+            border-collapse: collapse;
+            padding: 15px;
+        }
+        div {
+            border-style: ridge;
+            border-width: 5px;
+            padding-top: 20px;
+            padding-right: 20px;
+            padding-bottom: 20px;
+            padding-left: 40px;
+        }
+        </style>
     </head>
     <body>
         <!-- TODO: Text Box with Submit Button -->
         <h1>This will remind you</h1>
         <div id='addevent'>
+            <p>Enter New Reminder:</p>
             <form  action='http://127.0.0.1:5000/event' method='POST'>
-                <input type="text" name="name" placeholder="NAME">
+                <input type="text" name="name" placeholder="Event Name">
                 <input name='date' type="text" placeholder="YYYY-MM-DD or MM-DD">
                 <input type="submit" value="submit">
             </form>
         </div><br/>
         <!-- <div id='events'>
         </div><br /> -->
-    <div>
-        <h2>EVENTS</h2>
-        <div id='events'>
-            
-        </div>
+    <div id='box'>
+        <h3>EVENTS</h3>
+        <div id='events'></div>
+        <div id='expired'></div>
     </div>    
     </body>
 
@@ -38,17 +54,51 @@
     }
     
     function formatDate(datestr) {
-        const [y,m,d] = datestr.split('-');
-        return new Date(Number.parseInt(y), Number.parseInt(m)-1, Number.parseInt(d));
+
+        if (datestr.split('-').length == 3)
+        {
+            const [y,m,d] = datestr.split('-');
+            console.log()
+            //return new Date(Number.parseInt(y), Number.parseInt(m)-1, Number.parseInt(d));
+            let reminder = new Date(Number.parseInt(y), Number.parseInt(m)-1, Number.parseInt(d));
+            let now = new Date();
+            let timeLeft = reminder - now;
+            return timeLeft
+        } else {
+            const [m,d] = datestr.split('-');
+            const y =  new Date().getFullYear();
+            let reminder = new Date(Number.parseInt(y), Number.parseInt(m)-1, Number.parseInt(d));
+            let now = new Date();
+            let timeLeft = reminder - now;
+
+            if (timeLeft > 0){
+                return timeLeft
+            } else {
+                let reminder = new Date(Number.parseInt(y)+1, Number.parseInt(m)-1, Number.parseInt(d));
+                //console.log(new Date(Number.parseInt(y)+1, Number.parseInt(m)-1, Number.parseInt(d)));
+                let now = new Date();
+                let timeLeft = reminder - now;
+                return timeLeft
+
+            }
+            
+            //console.log(new Date(Number.parseInt(y), Number.parseInt(m)-1, Number.parseInt(d)));
+        }
     }
 
     function countDown(events){
         var html = '';
+        var exp = '';
+        html += `<table align="center"><caption>Active Events</caption><tr><th>Event Name</th><th>Event Date</th><th>Timer</th><th>Delete</th></tr>`
+        exp += `<table align="center"><caption>Expired Events</caption><tr><th>Event Name</th><th>Event Date</th><th>Timer</th><th>Delete</th></tr>`
         for (let event of events)
         {
-            let reminder = formatDate(event.date);
-            let now = new Date();
-            let timeLeft = reminder - now;
+            //let reminder = formatDate(event.date);
+            //console.log(reminder);
+            //let now = new Date();
+            
+            //let timeLeft = reminder - now;
+            let timeLeft = formatDate(event.date);
             if(timeLeft > 0)
             {
                 var days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
@@ -57,40 +107,46 @@
                 var seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
                 //console.log(days +':'+hours + ':'+minutes+ ':'+seconds);
             
-                html += `${event.name}: ${event.date}: ${days + "d " + hours + "h " + minutes + "m " + seconds + "s "}<br />`
+                //html += `${event.name}: ${event.date}: ${days + "d " + hours + "h " + minutes + "m " + seconds + "s "} <button type="button" value="submit">Delete</button><br>`
+                html += `<tr><td>${event.name}</td><td>${event.date}</td><td>${days + "d " + hours + "h " + minutes + "m " + seconds + "s "}</td><td><button type="button" value="submit">Delete</button></td></tr>`;
                 document.getElementById('events').innerHTML = html;
             } else {
-                html += `${event.name}: ${event.date}: ${"Expired"}<br>`
-                document.getElementById('events').innerHTML = html;
+                exp += `<tr><td>${event.name}</td><td>${event.date}</td><td>${"Expired"}</td><td><button type="button" value="submit">Delete</button></td></tr>`;
+                document.getElementById('expired').innerHTML = exp;
             }
         }
     }
-    
-    // function timer(events)
-    // {
-    //     console.log(events);
-    //     let html = '';
-    //     var t = setInterval( function() { countDown(events); },1000);
-    //      for (let event of events) 
-    //      {
-    //           html += `${event.name}: ${event.date}<br>`;
-    //      }
-    //      document.getElementById('events').innerHTML = html;
-    // }
+
+    function eventSort(events){
+        var sorting = [];
+        var matched = [];
+        var sortedEvents = [];
+        for (let event of events) {
+            var timeLeft = formatDate(event.date);
+            matched.push({
+                'name': event.name,
+                'time': timeLeft
+            });
+        }
+        //console.log(matched.sort(function(a,b) {return a.time - b.time}));
+        sorting = matched.sort(function(a,b) {return a.time - b.time});
+        console.log(sorting);
+        for (let event of events) {
+            var index = sorting.map(function(e) { return e.name; }).indexOf(event.name);
+            console.log(index);
+            sortedEvents[index] = event;
+        }
+        console.log(sortedEvents);
+        return sortedEvents
+    }
 
     document.addEventListener('DOMContentLoaded', () => {
         reqJSON('GET', '/events')
         .then(({status, data}) => {
             //timer(data.events);
             console.log(data.events);
-            let html = '';
-            var t = setInterval( function() { countDown(data.events); },1000);
-            // for (let event of data.events) 
-            // {
-            //   html += `${event.name}: ${event.date}<br>`;
-            // }    
-            // document.getElementById('events').innerHTML = html;
-
+            var events = eventSort(data.events);
+            var t = setInterval( function() { countDown(events); },1000);
         })
         .catch(({status, data}) => {
             document.getElementById('events').innerHTML = 'ERROR: ' +
