@@ -34,7 +34,6 @@ def events():
         d['date']=result['date']
         arr.append(d)
     # print(arr)
-
     # ! *****************
     return jsonify({'events': arr})
     #return jsonify(e)
@@ -48,13 +47,24 @@ def AddEvent():
         "name": name
     }
     # ! Data Store Implementation
+    query = client.query(kind='events')
+    results = list(query.fetch())
+    #print(results)
+    for result in results:
+        #print(result['name'])
+        if str(result['name']) == str(name):
+            print("Do not use duplicate event names!!")
+            return redirect(url_for('index'))
+        else:
+            pass
     key = client.key('events')
     item = datastore.Entity(key)
     item.update(d)
     key = client.put(item)
-    # ! **********************
-    #e['events'].append(d)
     return redirect(url_for('index'))
+    # ! **********************
+    
+    
 
 @app.route('/delete/<key>',methods=['POST'])
 def DeleteEvent(key):
@@ -63,7 +73,7 @@ def DeleteEvent(key):
     deleted = client.delete(key)
     print(key)
     # ! **********************
-    return '/'
+    return redirect(url_for('index'))
 
 @app.route('/sucess')
 def DeleteSuccess():

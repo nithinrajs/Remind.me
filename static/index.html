@@ -22,7 +22,7 @@
         <h1>This will remind you</h1>
         <div id='addevent'>
             <p>Enter New Reminder:</p>
-            <form  action='http://127.0.0.1:5000/event' method='POST'>
+            <form name='entry' action='http://127.0.0.1:5000/event' onsubmit="return validateForm()" method='POST'>
                 <input type="text" name="name" placeholder="Event Name">
                 <input name='date' type="text" placeholder="YYYY-MM-DD or MM-DD">
                 <input type="submit" value="submit">
@@ -139,6 +139,8 @@
         return sortedEvents
     }
 
+
+
     function delEvent(attr){
         //console.log(attr.value);
         var id = attr.value;
@@ -153,6 +155,28 @@
         });
     }
 
+
+    function validateForm() {
+        var date = document.forms["entry"]["date"].value;
+        var name = document.forms["entry"]["name"].value;
+         
+        if (date == "") {
+            alert("Date must be filled out");
+            return false;
+            } 
+        else if( (date.split('-').length) < 2 || (date.split('-').length) > 3 )
+            {
+                alert("Format the Date Properly" + (date.split('-').length));
+                return false;
+            } 
+        else if(ename.includes(name)){
+                alert("Change Event Name");
+            }
+        else {
+                return true;
+        }
+
+    }
     document.addEventListener('DOMContentLoaded', () => {
         reqJSON('GET', '/events')
         .then(({status, data}) => {
