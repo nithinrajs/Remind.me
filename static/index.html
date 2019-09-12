@@ -106,11 +106,11 @@
                 //console.log(days +':'+hours + ':'+minutes+ ':'+seconds);
                 //console.log(event.id)
                 //html += `${event.name}: ${event.date}: ${days + "d " + hours + "h " + minutes + "m " + seconds + "s "} <button type="button" value="submit">Delete</button><br>`
-                html += `<tr><td>${event.name}</td><td>${event.date}</td><td>${days + "d " + hours + "h " + minutes + "m " + seconds + "s "}</td><td><button id="del" type="button" value=${event.id}>Delete</button></td></tr>`;
+                html += `<tr><td>${event.name}</td><td>${event.date}</td><td>${days + "d " + hours + "h " + minutes + "m " + seconds + "s "}</td><td><button onclick="delEvent(this)" type="button" value=${event.id}>Delete</button></td></tr>`;
                 document.getElementById('events').innerHTML = html;
             } else {
                 //console.log(event.id)
-                exp += `<tr><td>${event.name}</td><td>${event.date}</td><td>${"Expired"}</td><td><button id="del" type="button" value=${event.id}>Delete</button></td></tr>`;
+                exp += `<tr><td>${event.name}</td><td>${event.date}</td><td>${"Expired"}</td><td><button onclick="delEvent(this)" type="button" value=${event.id}>Delete</button></td></tr>`;
                 document.getElementById('expired').innerHTML = exp;
             }
         }
@@ -139,6 +139,20 @@
         return sortedEvents
     }
 
+    function delEvent(attr){
+        //console.log(attr.value);
+        var id = attr.value;
+        reqJSON('POST', '/delete/'+id)
+        .then(({status, data}) => {
+            console.log('Deleting ' + id+ " event!");
+            location.reload();
+        })
+        .catch(({status, data}) => {
+            document.getElementById('events').innerHTML = 'ERROR: ' +
+            JSON.stringify(data);
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         reqJSON('GET', '/events')
         .then(({status, data}) => {
@@ -146,11 +160,15 @@
             console.log(data.events);
             var events = eventSort(data.events);
             var t = setInterval( function() { countDown(events); },1000);
-        })
+       })
         .catch(({status, data}) => {
             document.getElementById('events').innerHTML = 'ERROR: ' +
             JSON.stringify(data);
         });
     });
+
+    // document.addEventListener('DOMContentLoaded', () => {
+    //     console.log("loaded");
+    // });
 </script>
 </html>

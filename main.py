@@ -14,7 +14,7 @@ client = datastore.Client('remind-me-1089')
 #     }]
 # }
 
-@app.route('/')
+@app.route('/', methods=['GET'])
 def index():
     return app.send_static_file('index.html')
 
@@ -56,9 +56,17 @@ def AddEvent():
     #e['events'].append(d)
     return redirect(url_for('index'))
 
-@app.route('/event',methods=['POST'])
-def DeleteEvent():
-    pass
+@app.route('/delete/<key>',methods=['POST'])
+def DeleteEvent(key):
+    # ! Data Store Implementation
+    key = client.key('events', int(key))
+    deleted = client.delete(key)
+    print(key)
+    # ! **********************
+    return '/'
 
+@app.route('/sucess')
+def DeleteSuccess():
+    return 'Deletion Successfull'
 if __name__ == '__main__':
     app.run(debug=True)
