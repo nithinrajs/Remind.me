@@ -1,16 +1,18 @@
 from flask import Flask, send_from_directory, jsonify, request, redirect, url_for
+from google.cloud import datastore
 
 app = Flask(__name__, static_url_path='/static')
+client = datastore.Client('remind-me-1089')
 
-e = {
-    "events": [{
-        "date": "2018-02-23",
-        "name": "CIP Exam"
-    }, {
-        "date": "2019-01-20",
-        "name": "Course Add/Drop"
-    }]
-}
+# e = {
+#     "events": [{
+#         "date": "2018-02-23",
+#         "name": "CIP Exam"
+#     }, {
+#         "date": "2019-01-20",
+#         "name": "Course Add/Drop"
+#     }]
+# }
 
 @app.route('/')
 def index():
@@ -18,8 +20,24 @@ def index():
 
 @app.route('/events')
 def events():
-    # todo: Connect it to datastore
-    return jsonify(e)
+    # ! Data Store section
+    query = client.query(kind='events')
+    results = list(query.fetch())
+    keys = ['id','date','name']
+    d = dict.fromkeys(keys, None)
+    arr = []
+
+    for result in results:
+        d = dict.fromkeys(keys, None)
+        d['id'] = result.id
+        d['name']=result['name']
+        d['date']=result['date']
+        arr.append(d)
+    # print(arr)
+
+    # ! *****************
+    return jsonify({'events': arr})
+    #return jsonify(e)
 
 @app.route('/event',methods=['POST'])
 def AddEvent():
@@ -29,8 +47,18 @@ def AddEvent():
         "date": date,
         "name": name
     }
-    e['events'].append(d)
+    # ! Data Store Implementation
+    key = client.key('events')
+    item = datastore.Entity(key)
+    item.update(d)
+    key = client.put(item)
+    # ! **********************
+    #e['events'].append(d)
     return redirect(url_for('index'))
+
+@app.route('/event',methods=['POST'])
+def DeleteEvent():
+    pass
 
 if __name__ == '__main__':
     app.run(debug=True)

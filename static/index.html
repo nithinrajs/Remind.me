@@ -19,7 +19,6 @@
         </style>
     </head>
     <body>
-        <!-- TODO: Text Box with Submit Button -->
         <h1>This will remind you</h1>
         <div id='addevent'>
             <p>Enter New Reminder:</p>
@@ -58,7 +57,6 @@
         if (datestr.split('-').length == 3)
         {
             const [y,m,d] = datestr.split('-');
-            console.log()
             //return new Date(Number.parseInt(y), Number.parseInt(m)-1, Number.parseInt(d));
             let reminder = new Date(Number.parseInt(y), Number.parseInt(m)-1, Number.parseInt(d));
             let now = new Date();
@@ -106,12 +104,13 @@
                 var minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
                 var seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
                 //console.log(days +':'+hours + ':'+minutes+ ':'+seconds);
-            
+                //console.log(event.id)
                 //html += `${event.name}: ${event.date}: ${days + "d " + hours + "h " + minutes + "m " + seconds + "s "} <button type="button" value="submit">Delete</button><br>`
-                html += `<tr><td>${event.name}</td><td>${event.date}</td><td>${days + "d " + hours + "h " + minutes + "m " + seconds + "s "}</td><td><button type="button" value="submit">Delete</button></td></tr>`;
+                html += `<tr><td>${event.name}</td><td>${event.date}</td><td>${days + "d " + hours + "h " + minutes + "m " + seconds + "s "}</td><td><button id="del" type="button" value=${event.id}>Delete</button></td></tr>`;
                 document.getElementById('events').innerHTML = html;
             } else {
-                exp += `<tr><td>${event.name}</td><td>${event.date}</td><td>${"Expired"}</td><td><button type="button" value="submit">Delete</button></td></tr>`;
+                //console.log(event.id)
+                exp += `<tr><td>${event.name}</td><td>${event.date}</td><td>${"Expired"}</td><td><button id="del" type="button" value=${event.id}>Delete</button></td></tr>`;
                 document.getElementById('expired').innerHTML = exp;
             }
         }
@@ -130,10 +129,10 @@
         }
         //console.log(matched.sort(function(a,b) {return a.time - b.time}));
         sorting = matched.sort(function(a,b) {return a.time - b.time});
-        console.log(sorting);
+        //console.log(sorting);
         for (let event of events) {
             var index = sorting.map(function(e) { return e.name; }).indexOf(event.name);
-            console.log(index);
+            //console.log(index);
             sortedEvents[index] = event;
         }
         console.log(sortedEvents);
