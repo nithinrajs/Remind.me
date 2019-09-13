@@ -2,7 +2,7 @@ from flask import Flask, send_from_directory, jsonify, request, redirect, url_fo
 from google.cloud import datastore
 
 app = Flask(__name__, static_url_path='/static')
-client = datastore.Client('remind-me-1089')
+client = datastore.Client('remind-me-663')
 
 # e = {
 #     "events": [{
