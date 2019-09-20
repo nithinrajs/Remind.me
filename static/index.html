@@ -2,6 +2,7 @@
     <head>
         <title>REMIND ME!</title>
         <style>
+        
 
         table, th, td {
             border-bottom: 1px solid #ddd;
@@ -20,9 +21,13 @@
     </head>
     <body>
         <h1>This will remind you</h1>
+        <form id='logout' action="http://127.0.0.1:8080/logout" method="POST">
+            <input type="submit" value="logout" style="float: right;">
+        </form><br>
         <div id='addevent'>
             <p>Enter New Reminder:</p>
-            <form name='entry' action='https://remind-me-663.appspot.com/event' onsubmit="return validateForm()" method='POST'>
+            <!-- <form name='entry' action='https://remind-me-663.appspot.com/event' onsubmit="return validateForm()" method='POST'> -->
+            <form name='entry' action='http://127.0.0.1:8080/event' onsubmit="return validateForm()" method='POST'>
                 <input type="text" name="name" placeholder="Event Name">
                 <input name='date' type="text" placeholder="YYYY-MM-DD or MM-DD">
                 <input type="submit" value="submit">
@@ -138,8 +143,6 @@
         console.log(sortedEvents);
         return sortedEvents
     }
-
-
 
     function delEvent(attr){
         //console.log(attr.value);
