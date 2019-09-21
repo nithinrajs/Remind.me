@@ -4,7 +4,7 @@
     </head>
     <body>
         <h2>Registration Page</h2>
-        <form action="http://127.0.0.1:8080/register" method='POST'>
+        <form name="signup" action="http://127.0.0.1:8080/register" onsubmit="return validateForm()" method='POST'>
             <input type="text" name="username" placeholder="Username"><br>
             <input type="text" name="password" placeholder="Password"><br>
             <input type="text" name="rptpass" placeholder="Repeat Password"><br>
@@ -12,4 +12,34 @@
         </form>
 
     </body>
-</htmlp
+    <script>
+        
+        function validateForm() {
+        var username = document.forms["signup"]["username"].value;
+        var password = document.forms["signup"]["password"].value;
+        var rptpass = document.forms["signup"]["rptpass"].value;
+        if (password != rptpass) {
+            alert("Passwords Do Not Match");
+            return false;
+            } 
+        else if(username == '')
+            {
+                alert("Enter username");
+                return false;
+            } 
+        else if(password == ""){
+                alert("Enter Password");
+                return false;
+            }
+        else if(rptpass == ""){
+            alert("Repeat the Password");
+            return false;
+        }
+        else {
+                return true;
+        }
+
+        }
+    
+    </script>
+</html>

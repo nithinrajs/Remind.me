@@ -16,10 +16,10 @@ client = datastore.Client('remind-me-1089')
 #     }]
 # }
 
-creds = {
-    'username':None,
-    'sessionID':None
-}
+# creds = {
+#     'username':None,
+#     'sessionID':None
+# }
 
 def rand():
     return str(randint(100000000000,999999999999))
@@ -34,7 +34,6 @@ def auth(user_input,db_input):
 @app.route('/', methods=['GET'])
 def index():
     # todo: Make a check for session cookie!
-    print(creds)
     if request.cookies.get('sessionID') == None:
         # print(request.cookies.get('sessionID'))
         return app.send_static_file('login.html')
@@ -51,7 +50,6 @@ def index():
 
 @app.route('/login', methods=['GET','POST'])
 def login():
-    print(creds)
     
     if request.method == 'POST':
         username = request.form['username']
@@ -70,8 +68,8 @@ def login():
                 task['sessionID'] = random
                 
                 client.put(task)
-                creds['username'] = username
-                creds['sessionID'] = random
+                # creds['username'] = username
+                # creds['sessionID'] = random
 
                 resp = make_response(redirect(url_for('index')))
                 resp.set_cookie("sessionID", random, max_age=60 * 60 * 24)
@@ -107,8 +105,8 @@ def register():
             'password':password,
             'sessionID': random
         })
-        creds['username'] = username
-        creds['sessionID'] = random
+        # creds['username'] = username
+        # creds['sessionID'] = random
         # print(task)
         client.put(task)
         resp = make_response(redirect(url_for('index')))
