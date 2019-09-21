@@ -22,7 +22,7 @@ creds = {
 }
 
 def rand():
-    return randint(0, 10000)
+    return str(randint(100000000000,999999999999))
 
 def auth(user_input,db_input):
     if user_input == db_input:
@@ -35,11 +35,17 @@ def auth(user_input,db_input):
 def index():
     # todo: Make a check for session cookie!
     print(creds)
-    if request.cookies.get('username') == None:
-        print(request.cookies.get('username'))
+    if request.cookies.get('sessionID') == None:
+        # print(request.cookies.get('sessionID'))
         return app.send_static_file('login.html')
-    print(request.cookies.get('username'))
-    creds['username'] = request.cookies.get('username')
+
+    query = client.query(kind='users')
+    query.add_filter('sessionID','=',request.cookies.get('sessionID'))  
+
+    if(list(query.fetch()) == []):
+          return app.send_static_file('login.html')
+
+    print(request.cookies.get('sessionID'))
     return app.send_static_file('index.html')
 
 
@@ -57,10 +63,18 @@ def login():
             test = data['password']
             
             if(auth(password,test)):
+                print('inside')
+                random = rand()
+                # task = datastore.Entity(key=key)
+                task = client.get(key)
+                task['sessionID'] = random
+                
+                client.put(task)
                 creds['username'] = username
-                creds['sessionID'] = data['sessionID']
+                creds['sessionID'] = random
+
                 resp = make_response(redirect(url_for('index')))
-                resp.set_cookie("username", username, max_age=60 * 60 * 24)
+                resp.set_cookie("sessionID", random, max_age=60 * 60 * 24)
                 return resp
             else:
                 return 'Wrong Creds' # ! NEED to change this
@@ -71,7 +85,7 @@ def login():
 @app.route('/logout', methods=['POST'])
 def logout():
     resp = make_response(redirect(url_for('index')))
-    resp.set_cookie('username', expires=0)
+    resp.set_cookie('sessionID', expires=0)
     return resp
 
 
@@ -95,10 +109,10 @@ def register():
         })
         creds['username'] = username
         creds['sessionID'] = random
-        print(task)
+        # print(task)
         client.put(task)
         resp = make_response(redirect(url_for('index')))
-        resp.set_cookie("username", username, max_age=60 * 60 * 24)
+        resp.set_cookie("sessionID", random, max_age=60 * 60 * 24)
         return resp
 
 
@@ -108,23 +122,32 @@ def events():
     # todo: get events of that username
     # query = client.query(kind='events')
     # query.add_filter("username", "=" , "sunny")
-    if (request.cookies.get('username')):
-        parent_key = client.key('users', request.cookies.get('username'))
-        query = client.query(kind='events', ancestor=parent_key)
-        results = list(query.fetch())
-        keys = ['id','date','name']
-        d = dict.fromkeys(keys, None)
-        arr = []
-        #print(results)
-        for result in results:
+    if (request.cookies.get('sessionID')):
+        query = client.query(kind='users')
+        query.add_filter('sessionID','=',request.cookies.get('sessionID'))
+
+        if(list(query.fetch()) != []):
+            result = list(query.fetch())
+            parent_key = result[0].key
+
+            # parent_key = client.key('users', request.cookies.get('username'))
+            query = client.query(kind='events', ancestor=parent_key)
+            results = list(query.fetch())
+            keys = ['id','date','name']
             d = dict.fromkeys(keys, None)
-            d['id'] = result.id
-            d['name']=result['name']
-            d['date']=result['date']
-            arr.append(d)
-    # print(arr)
-    # ! *****************
-        return jsonify({'events': arr})
+            arr = []
+            #print(results)
+            for result in results:
+                d = dict.fromkeys(keys, None)
+                d['id'] = result.id
+                d['name']=result['name']
+                d['date']=result['date']
+                arr.append(d)
+            # print(arr)
+        # ! *****************
+            return jsonify({'events': arr})
+        else:
+            return redirect(url_for('index'))
     else:
         return redirect(url_for('index'))
 
@@ -138,7 +161,12 @@ def AddEvent():
         # "id" : rand()
     }
     # ! Data Store Implementation
-    parent_key = client.key('users', request.cookies.get('username'))
+    query = client.query(kind='users')
+    query.add_filter('sessionID','=',request.cookies.get('sessionID'))
+    result = list(query.fetch())
+    parent_key = result[0].key
+
+    # parent_key = client.key('users', request.cookies.get('usernamese'))
     query = client.query(kind='events', ancestor=parent_key)
     results = list(query.fetch())
     #print(results)
@@ -159,7 +187,12 @@ def AddEvent():
 @app.route('/delete/<key>',methods=['POST'])
 def DeleteEvent(key):
     # ! Data Store Implementation
-    parent_key = client.key('users', creds['username'])
+
+    query = client.query(kind='users')
+    query.add_filter('sessionID','=',request.cookies.get('sessionID'))
+    result = list(query.fetch())
+    parent_key = result[0].key
+    # parent_key = client.key('users', creds['username'])
     key = client.key('events', int(key), parent=parent_key)
     deleted = client.delete(key)
     print(key)
