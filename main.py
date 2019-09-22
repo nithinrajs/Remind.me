@@ -2,6 +2,7 @@ from flask import Flask, send_from_directory, jsonify, request, redirect, url_fo
 from google.cloud import datastore
 from random import randint
 import bcrypt
+import logging
 
 app = Flask(__name__, static_url_path='/static')
 # client = datastore.Client('remind-me-663')
@@ -28,6 +29,7 @@ def hasher(pwd): #hashing the user inout password
 
 @app.route('/', methods=['GET'])
 def index():
+    logging.warning('This is an error message')
     if request.cookies.get('sessionID') == None:
         # print(request.cookies.get('sessionID'))
         return app.send_static_file('login.html')
@@ -44,7 +46,7 @@ def index():
 
 @app.route('/login', methods=['GET','POST'])
 def login():
-    
+    logging.warning('in login')
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -80,10 +82,9 @@ def logout():
     resp.set_cookie('sessionID', expires=0)
     return resp
 
-
-
 @app.route('/register', methods=['POST', 'GET'])
 def register():
+    logging.warning('register')
      # todo: Set Session cookie if username does not exist!
     if request.method == 'GET':
         return app.send_static_file('signup.html')
