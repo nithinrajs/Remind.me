@@ -1,39 +1,33 @@
 from flask import Flask, send_from_directory, jsonify, request, redirect, url_for, make_response
 from google.cloud import datastore
 from random import randint
+import bcrypt
 
 app = Flask(__name__, static_url_path='/static')
 # client = datastore.Client('remind-me-663')
 client = datastore.Client('remind-me-1089')
 
-# e = {
-#     "events": [{
-#         "date": "2018-02-23",
-#         "name": "CIP Exam"
-#     }, {
-#         "date": "2019-01-20",
-#         "name": "Course Add/Drop"
-#     }]
-# }
-
-# creds = {
-#     'username':None,
-#     'sessionID':None
-# }
-
-def rand():
+def rand(): # Generating session
     return str(randint(100000000000,999999999999))
 
-def auth(user_input,db_input):
-    if user_input == db_input:
+def auth(user_input, db_input, salt): #Checking hash
+    test = bcrypt.hashpw(user_input.encode(), salt)
+
+    if test == db_input:
         return True
     else:
         return False
 
+def hasher(pwd): #hashing the user inout password
+    password = pwd.encode()
+    salt = bcrypt.gensalt(10)
+    hashed = bcrypt.hashpw(password, salt)
+    return hashed , salt
+
+
 
 @app.route('/', methods=['GET'])
 def index():
-    # todo: Make a check for session cookie!
     if request.cookies.get('sessionID') == None:
         # print(request.cookies.get('sessionID'))
         return app.send_static_file('login.html')
@@ -44,7 +38,7 @@ def index():
     if(list(query.fetch()) == []):
           return app.send_static_file('login.html')
 
-    print(request.cookies.get('sessionID'))
+    # print(request.cookies.get('sessionID'))
     return app.send_static_file('index.html')
 
 
@@ -59,28 +53,28 @@ def login():
         if(client.get(key)):
             data = client.get(key)
             test = data['password']
+            salt = data['salt']
             
-            if(auth(password,test)):
-                print('inside')
+            if(auth(password,test,salt)):
                 random = rand()
-                # task = datastore.Entity(key=key)
                 task = client.get(key)
                 task['sessionID'] = random
                 
                 client.put(task)
-                # creds['username'] = username
-                # creds['sessionID'] = random
 
                 resp = make_response(redirect(url_for('index')))
-                resp.set_cookie("sessionID", random, max_age=60 * 60 * 24)
+                resp.set_cookie("sessionID", random, max_age=60 * 60 * 1) # Setting cookie time 1 hour
                 return resp
             else:
-                return 'Wrong Creds' # ! NEED to change this
+                return app.send_static_file('login.html')
+        
+        else:
+            return app.send_static_file('login.html')
                 
     else:
         return app.send_static_file('login.html')
 
-@app.route('/logout', methods=['POST'])
+@app.route('/logout', methods=['POST']) # Expiring the cookie
 def logout():
     resp = make_response(redirect(url_for('index')))
     resp.set_cookie('sessionID', expires=0)
@@ -100,17 +94,16 @@ def register():
         random = rand()
         complete_key = client.key('users', username)
         task = datastore.Entity(key=complete_key)
+        hashed,salt = hasher(password)
         task.update({
             'username':username,
-            'password':password,
-            'sessionID': random
+            'password':hashed,
+            'salt':salt,
+            'sessionID':random
         })
-        # creds['username'] = username
-        # creds['sessionID'] = random
-        # print(task)
         client.put(task)
         resp = make_response(redirect(url_for('index')))
-        resp.set_cookie("sessionID", random, max_age=60 * 60 * 24)
+        resp.set_cookie("sessionID", random, max_age=60 * 60 * 1) # Setting cookie time 1 hour
         return resp
 
 
@@ -193,7 +186,7 @@ def DeleteEvent(key):
     # parent_key = client.key('users', creds['username'])
     key = client.key('events', int(key), parent=parent_key)
     deleted = client.delete(key)
-    print(key)
+    # print(key)
     # ! **********************
     return redirect(url_for('index'))
 
