@@ -2,12 +2,14 @@ from flask import Flask, send_from_directory, jsonify, request, redirect, url_fo
 from google.cloud import datastore
 from random import randint
 import bcrypt
-import logging
+import logging 
+import requests, uuid, json, base64
 
 app = Flask(__name__, static_url_path='/static')
 #Datastore
 # client = datastore.Client('remind-me-1089')
-client = datastore.Client('remind-me-2lab')
+client = datastore.Client('remind-me-oauth')
+client_id = "236868157229-5qo5ucudtv3tshrsigvvih360p4p0f8f.apps.googleusercontent.com"
 
 @app.route('/', methods=['GET','POST'])
 def root():
@@ -30,7 +32,7 @@ def root():
 
 @app.route('/login', methods=['GET','POST'])
 def login():
-    logging.warning('in login')
+    # logging.warning('in login')
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -56,7 +58,60 @@ def login():
         else:
             return app.send_static_file('login.html')               
     else:
+        # creds['state']= rand()
+        # creds['nounce'] = rand()
+        
+        resp = make_response(app.send_static_file('login.html'))
+        resp.set_cookie("state", rand() , max_age=60 * 60 * 1)
+        resp.set_cookie("nounce", rand(), max_age=60 * 60 * 1)
+        resp.set_cookie("clientID", client_id, max_age=60 * 60 * 1)
+        return resp
+        # return app.send_static_file('login.html')
+
+@app.route('/oidauth', methods=['GET'])
+def oauth():
+    logging.warning(request.cookies.get('state'))
+    if request.args['state'] == request.cookies.get('state'):
+        state = request.args['state']
+        code = request.args['code']
+        secret = client.get(client.key('secret', 'oidc'))['client-secret']
+
+        response = requests.post("https://www.googleapis.com/oauth2/v4/token",
+            {"code": code,
+            "client_id": client_id,
+            "client_secret": secret,
+            "redirect_uri": "https://remind-me-oauth.appspot.com/oidauth",
+            "grant_type": "authorization_code"})
+        id_token = response.json()['id_token']
+        _, body, _ = id_token.split('.')
+        body += '=' * (-len(body) % 4)
+        claims = json.loads(base64.urlsafe_b64decode(body.encode('utf-8')))
+        logging.warning(claims)
+
+        if claims['nonce'] == request.cookies.get('nounce'):
+            logging.warning(claims['sub'])
+            logging.warning(claims['email'])
+            random = rand()
+            complete_key = client.key('users', claims['sub'])
+            task = datastore.Entity(key=complete_key)
+            task.update({
+                'username':claims['sub'],
+                'password':'',
+                'salt':'',
+                'email':claims['email'],
+                'sessionID':random
+            })
+            client.put(task)
+            resp = make_response(redirect(url_for('root')))
+            resp.set_cookie("sessionID", random, max_age=60 * 60 * 1) # Setting cookie time 1 hour
+            return resp, 307
+
+        else:
+            return app.send_static_file('login.html')    
+
+    else:
         return app.send_static_file('login.html')
+
 
 @app.route('/logout', methods=['POST']) # Expiring the cookie
 def logout():
@@ -82,6 +137,7 @@ def register():
             'username':username,
             'password':hashed,
             'salt':salt,
+            'email':'',
             'sessionID':random
         })
         client.put(task)
@@ -173,7 +229,7 @@ def DeleteSuccess():
     return 'Deletion Successfull'
 
 def rand(): # Generating session
-    return str(randint(100000000000,999999999999))
+    return str(uuid.uuid4())
 
 def auth(user_input, db_input, salt): #Checking hash
     test = bcrypt.hashpw(user_input.encode(), salt)
